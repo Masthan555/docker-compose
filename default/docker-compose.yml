@@ -46,7 +46,7 @@ services:
       service: microservice-db-config
 
   configserver:
-    image: masthansoma/configserver:v3
+    image: masthansoma/configserver:v4
     container_name: configserver-ms
     ports:
       - "8888:8888"
@@ -64,7 +64,7 @@ services:
       service: microservice-base-config
 
   eurekaserver:
-    image: masthansoma/eureka:v3
+    image: masthansoma/eureka:v4
     container_name: eurekaserver-ms
     ports:
       - "8070:8070"
@@ -83,8 +83,26 @@ services:
       file: common-config.yml
       service: microservice-configserver-service
 
+  gatewayserver:
+    image: masthansoma/gatewayserver:v4
+    container_name: gatewayserver-ms
+    ports:
+      - "8072:8072"
+    depends_on:
+      accounts:
+        condition: service_healthy
+      loans:
+        condition: service_healthy
+      cards:
+        condition: service_healthy
+    environment:
+      - SPRING_APPLICATION_NAME=gatewayserver
+    extends:
+      file: common-config.yml
+      service: microservice-eurekaserver-service
+
   accounts:
-    image: masthansoma/accounts:v3
+    image: masthansoma/accounts:v4
     container_name: accounts-ms
     ports:
       - "8080:8080"
@@ -95,6 +113,12 @@ services:
         condition: service_healthy
       eurekaserver:
         condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     environment:
       - SPRING_APPLICATION_NAME=accounts
       - SPRING_DATASOURCE_URL=jdbc:mysql://accountsdb:3306/accountsdb
@@ -103,7 +127,7 @@ services:
       service: microservice-eurekaserver-service
 
   loans:
-    image: masthansoma/loans:v3
+    image: masthansoma/loans:v4
     container_name: loans-ms
     ports:
       - "8081:8081"
@@ -114,6 +138,12 @@ services:
         condition: service_healthy
       eurekaserver:
         condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8081/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     environment:
       - SPRING_APPLICATION_NAME=loans
       - SPRING_DATASOURCE_URL=jdbc:mysql://loansdb:3306/loansdb
@@ -122,7 +152,7 @@ services:
       service: microservice-eurekaserver-service
 
   cards:
-    image: masthansoma/cards:v3
+    image: masthansoma/cards:v4
     container_name: cards-ms
     ports:
       - "8082:8082"
@@ -133,6 +163,12 @@ services:
         condition: service_healthy
       eurekaserver:
         condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8082/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     environment:
       - SPRING_APPLICATION_NAME=cards
       - SPRING_DATASOURCE_URL=jdbc:mysql://cardsdb:3306/cardsdb
