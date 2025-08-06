@@ -40,3 +40,9 @@ services:
       service: microservice-configserver-service
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+
+  microservice-gatewayserver-service:
+    extends:
+      service: microservice-eurekaserver-service
+    environment:
+      SPRING_DATA_REDIS_HOST: redis

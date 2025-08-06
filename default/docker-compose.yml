@@ -1,4 +1,19 @@
 services:
+  redis:
+    image: redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    extends:
+      file: common-config.yml
+      service: network-deploy-service
+
   rabbitmq:
     image: rabbitmq:3.12-management
     hostname: rabbitmq
@@ -46,7 +61,7 @@ services:
       service: microservice-db-config
 
   configserver:
-    image: masthansoma/configserver:v4
+    image: masthansoma/configserver:v5
     container_name: configserver-ms
     ports:
       - "8888:8888"
@@ -64,7 +79,7 @@ services:
       service: microservice-base-config
 
   eurekaserver:
-    image: masthansoma/eureka:v4
+    image: masthansoma/eureka:v5
     container_name: eurekaserver-ms
     ports:
       - "8070:8070"
@@ -84,7 +99,7 @@ services:
       service: microservice-configserver-service
 
   gatewayserver:
-    image: masthansoma/gatewayserver:v4
+    image: masthansoma/gatewayserver:v5
     container_name: gatewayserver-ms
     ports:
       - "8072:8072"
@@ -95,14 +110,16 @@ services:
         condition: service_healthy
       cards:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - SPRING_APPLICATION_NAME=gatewayserver
     extends:
       file: common-config.yml
-      service: microservice-eurekaserver-service
+      service: microservice-gatewayserver-service
 
   accounts:
-    image: masthansoma/accounts:v4
+    image: masthansoma/accounts:v5
     container_name: accounts-ms
     ports:
       - "8080:8080"
@@ -127,7 +144,7 @@ services:
       service: microservice-eurekaserver-service
 
   loans:
-    image: masthansoma/loans:v4
+    image: masthansoma/loans:v5
     container_name: loans-ms
     ports:
       - "8081:8081"
@@ -152,7 +169,7 @@ services:
       service: microservice-eurekaserver-service
 
   cards:
-    image: masthansoma/cards:v4
+    image: masthansoma/cards:v5
     container_name: cards-ms
     ports:
       - "8082:8082"
