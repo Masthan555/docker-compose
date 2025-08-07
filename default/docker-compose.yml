@@ -8,7 +8,7 @@ services:
       - 7946
       - 9095
     volumes:
-      - ../observability/loki-config.yaml:/etc/loki/config.yaml
+      - ../observability/loki/loki-config.yaml:/etc/loki/config.yaml
     depends_on:
       - minio
     healthcheck:
@@ -29,7 +29,7 @@ services:
       - 7946
       - 9095
     volumes:
-      - ../observability/loki-config.yaml:/etc/loki/config.yaml
+      - ../observability/loki/loki-config.yaml:/etc/loki/config.yaml
     healthcheck:
       test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
       interval: 10s
@@ -43,7 +43,7 @@ services:
   alloy:
     image: grafana/alloy:latest
     volumes:
-      - ../observability/alloy-local-config.yaml:/etc/alloy/config.alloy:ro
+      - ../observability/alloy/alloy-local-config.yaml:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     ports:
@@ -81,6 +81,17 @@ services:
       file: common-config.yml
       service: network-deploy-service
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    extends:
+      file: common-config.yml
+      service: network-deploy-service
+
   grafana:
     image: grafana/grafana:latest
     environment:
@@ -93,22 +104,11 @@ services:
       - sh
       - -euc
       - |
-        mkdir -p /etc/grafana/provisioning/datasources
-        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
-        apiVersion: 1
-        datasources:
-          - name: Loki
-            type: loki
-            access: proxy
-            url: http://gateway:3100
-            jsonData:
-              httpHeaderName1: "X-Scope-OrgID"
-            secureJsonData:
-              httpHeaderValue1: "tenant1"
-        EOF
         /run.sh
     ports:
       - "3000:3000"
+    volumes:
+      - ../observability/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
     healthcheck:
       test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
       interval: 10s
@@ -121,7 +121,7 @@ services:
   backend:
     image: grafana/loki:latest
     volumes:
-      - ../observability/loki-config.yaml:/etc/loki/config.yaml
+      - ../observability/loki/loki-config.yaml:/etc/loki/config.yaml
     ports:
       - "3100"
       - "7946"
@@ -258,7 +258,7 @@ services:
       service: microservice-db-config
 
   configserver:
-    image: masthansoma/configserver:v5
+    image: masthansoma/configserver:v6
     container_name: configserver-ms
     ports:
       - "8888:8888"
@@ -276,7 +276,7 @@ services:
       service: microservice-base-config
 
   eurekaserver:
-    image: masthansoma/eureka:v5
+    image: masthansoma/eureka:v6
     container_name: eurekaserver-ms
     ports:
       - "8070:8070"
@@ -296,7 +296,7 @@ services:
       service: microservice-configserver-service
 
   gatewayserver:
-    image: masthansoma/gatewayserver:v5
+    image: masthansoma/gatewayserver:v6
     container_name: gatewayserver-ms
     ports:
       - "8072:8072"
@@ -316,7 +316,7 @@ services:
       service: microservice-gatewayserver-service
 
   accounts:
-    image: masthansoma/accounts:v5
+    image: masthansoma/accounts:v6
     container_name: accounts-ms
     ports:
       - "8080:8080"
@@ -341,7 +341,7 @@ services:
       service: microservice-eurekaserver-service
 
   loans:
-    image: masthansoma/loans:v5
+    image: masthansoma/loans:v6
     container_name: loans-ms
     ports:
       - "8081:8081"
@@ -366,7 +366,7 @@ services:
       service: microservice-eurekaserver-service
 
   cards:
-    image: masthansoma/cards:v5
+    image: masthansoma/cards:v6
     container_name: cards-ms
     ports:
       - "8082:8082"
